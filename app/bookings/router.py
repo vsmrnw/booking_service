@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.bookings.repository import BookingDAO
+from app.bookings.repository import BookingRepo
 
 router = APIRouter(
     prefix="/bookings",
@@ -9,4 +9,4 @@ router = APIRouter(
 
 @router.get("")
 async def get_bookings():
-    return await BookingDAO.find_all()
+    return await BookingRepo.find_all()

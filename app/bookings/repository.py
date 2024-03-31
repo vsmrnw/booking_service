@@ -1,6 +1,6 @@
 from app.bookings.models import Bookings
-from app.repository.base import BaseDAO
+from app.repository.base import BaseRepo
 
 
-class BookingDAO(BaseDAO):
+class BookingRepo(BaseRepo):
     model = Bookings
