@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.bookings.dao import BookingDAO
+from app.bookings.repository import BookingDAO
 
 router = APIRouter(
     prefix="/bookings",
