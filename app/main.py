@@ -1,34 +1,32 @@
 from datetime import date
+from typing import Annotated
+
 from fastapi import FastAPI, Query, Depends
 from pydantic import BaseModel
 
 from app.bookings.router import router as router_bookings
+from app.users.router import router as router_users
 
 app = FastAPI()
 
+app.include_router(router_users)
 app.include_router(router_bookings)
 
 
-class HotelsSearchArgs:
-    def __init__(self,
-                 location: str,
-                 date_from: date,
-                 date_to: date,
-                 has_spa: bool = None,
-                 stars: int = Query(None, ge=1, le=5),
-                 ):
-        self.location = location
-        self.date_from = date_from
-        self.date_to = date_to
-        self.has_spa = has_spa
-        self.stars = stars
+class SHotel(BaseModel):
+    address: str
+    name: str
+    stars: int
 
 
 @app.get("/hotels")
 async def get_hotels(
-        search_args: HotelsSearchArgs = Depends()
-):
-    return search_args
+        location: str,
+        date_from: date,
+        date_to: date,
+        has_spa: Annotated[bool | None] = None,
+        stars: Annotated[int | None, Query(ge=1, le=5)] = None, ):
+    return date_to, date_from
 
 
 class SBooking(BaseModel):
