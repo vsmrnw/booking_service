@@ -25,16 +25,5 @@ async def get_hotels(
         date_from: date,
         date_to: date,
         has_spa: Annotated[bool, Query()] = None,
-        stars: Annotated[int, Query(ge=1, le=5)] = None, ):
+        stars: Annotated[int, Query(ge=1, le=5)] = None, ) -> list[SHotel]:
     return date_to, date_from
-
-
-class SBooking(BaseModel):
-    room_id: int
-    date_from: date
-    date_to: date
-
-
-@app.post("/bookings")
-async def add_booking(booking: SBooking):
-    pass
