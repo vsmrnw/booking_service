@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from pydantic import parse_obj_as
 
 from app.bookings.repository import BookingRepo
@@ -18,10 +18,10 @@ router = APIRouter(
 @router.get("")
 async def get_bookings(user: Users = Depends(get_current_user)) -> list[
     SBooking]:
-    return await BookingRepo.find_all(user_id=user.id)
+    return await BookingRepo.find_all(user_id=user)
 
 
-@router.post("")
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def add_booking(
         room_id: int, date_from: date, date_to: date,
         user: Users = Depends(get_current_user),
@@ -37,7 +37,7 @@ async def add_booking(
     return booking
 
 
-@router.delete("/{booking_id")
+@router.delete("/{booking_id}")
 async def remove_booking(
         booking_id: int,
         user: Users = Depends(get_current_user)
