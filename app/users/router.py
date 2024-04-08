@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, Depends
+from fastapi import APIRouter, Response, Depends, status
 
 from app.users.auth import get_password_hash, authenticate_user, \
     create_access_token
@@ -7,41 +7,46 @@ from app.users.models import Users
 from app.users.repository import UsersRepo
 from app.users.schemas import SUserAuth
 from app.exceptions import UserAlreadyExistsException, \
-    IncorrectEmailOrPasswordException
+    IncorrectEmailOrPasswordException, CannotAddDataToDatabase
 
-router = APIRouter(
+router_auth = APIRouter(
     prefix="/auth",
-    tags=["Auth & Users"],
+    tags=["Auth"],
 )
 
+router_users = APIRouter(
+    prefix="/users",
+    tags=["Users"],
+)
 
-@router.post("/register")
+@router_auth.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_data: SUserAuth):
     existing_user = await UsersRepo.find_one_or_none(email=user_data.email)
     if existing_user:
         raise UserAlreadyExistsException
     hashed_password = get_password_hash(user_data.password)
-    await UsersRepo.add(email=user_data.email, hashed_password=hashed_password)
+    new_user = await UsersRepo.add(email=user_data.email, hashed_password=hashed_password)
+    if not new_user:
+        raise CannotAddDataToDatabase
     return {"message": "user created successfully"}
 
 
-@router.post("/login")
+@router_auth.post("/login")
 async def login_user(response: Response, user_data: SUserAuth):
     user = await authenticate_user(user_data.email, user_data.password)
     if not user:
         raise IncorrectEmailOrPasswordException
-    print(user)
     access_token = create_access_token({"sub": str(user)})
     response.set_cookie("booking_access_token", access_token, httponly=True)
-    return access_token
+    return {"access_token": access_token}
 
 
-@router.post("/logout")
+@router_auth.post("/logout")
 async def logout_user(response: Response):
     response.delete_cookie("booking_access_token")
     return {"message": "successfully logged out "}
 
 
-@router.get("/me")
+@router_users.get("/me")
 async def read_users_me(current_user: Users = Depends(get_current_user)):
     return current_user

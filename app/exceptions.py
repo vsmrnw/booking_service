@@ -48,6 +48,9 @@ class DateFromCannotBeAfterDateTo(BookingException):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "Arrival date cannot be later than departure date"
 
+class CannotAddDataToDatabase(BookingException):
+    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail="Failed to add entry"
 
 class CannotBookHotelForLongPeriod(BookingException):
     status_code = status.HTTP_400_BAD_REQUEST
