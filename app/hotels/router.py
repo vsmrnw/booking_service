@@ -1,12 +1,15 @@
+import asyncio
 from datetime import date, datetime, timedelta
-from typing import List
+from typing import List, Annotated, Optional
 
 from fastapi import APIRouter, Query
+from fastapi_cache.decorator import cache
+from pydantic import parse_obj_as
 
 from app.exceptions import CannotBookHotelForLongPeriod, \
     DateFromCannotBeAfterDateTo
 from app.hotels.repository import HotelsRepo
-from app.hotels.schemas import SHotelInfo
+from app.hotels.schemas import SHotelInfo, SHotel
 
 router = APIRouter(
     prefix="/hotels",
@@ -15,12 +18,14 @@ router = APIRouter(
 
 
 @router.get("/{location}")
+@cache(expire=30)
 async def get_hotels_by_location_and_time(
         location: str,
-        date_from: date = Query(...,
-                                description=f"e.g., {datetime.now().date()}"),
-        date_to: date = Query(...,
-                              description=f"e.g, {(datetime.now() + timedelta(days=14)).date()}"),
+        date_from: Annotated[
+            date, Query(...,
+                        description=f"e.g, {datetime.now().date()}")],
+        date_to: Annotated[date, Query(...,
+                                       description=f"e.g., {(datetime.now() + timedelta(days=14)).date()}")],
 ) -> List[SHotelInfo]:
     if date_from > date_to:
         raise DateFromCannotBeAfterDateTo
@@ -30,6 +35,8 @@ async def get_hotels_by_location_and_time(
     return hotels
 
 
-@router.get("/{location}")
-async def get_hotels(location: str):
-    return await HotelsRepo.find_all(location=location)
+@router.get("/id/{hotel_id}", include_in_schema=True)
+async def get_hotel_by_id(
+        hotel_id: int,
+) -> Optional[SHotel]:
+    return await HotelsRepo.find_one_or_none(id=hotel_id)
