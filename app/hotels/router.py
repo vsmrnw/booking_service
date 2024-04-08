@@ -4,7 +4,6 @@ from typing import List, Annotated, Optional
 
 from fastapi import APIRouter, Query
 from fastapi_cache.decorator import cache
-from pydantic import parse_obj_as
 
 from app.exceptions import CannotBookHotelForLongPeriod, \
     DateFromCannotBeAfterDateTo
@@ -27,6 +26,7 @@ async def get_hotels_by_location_and_time(
         date_to: Annotated[date, Query(...,
                                        description=f"e.g., {(datetime.now() + timedelta(days=14)).date()}")],
 ) -> List[SHotelInfo]:
+    await asyncio.sleep(3)
     if date_from > date_to:
         raise DateFromCannotBeAfterDateTo
     if (date_to - date_from).days > 31:
