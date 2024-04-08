@@ -34,8 +34,7 @@ class HotelsRepo(BaseRepo):
     @classmethod
     async def find_all(cls, location: str, date_from: date, date_to: date):
         booked_rooms = (
-            select(Bookings.room_id, func.count(Bookings.room_id)).label(
-                "rooms_booked")
+            select(Bookings.room_id, func.count(Bookings.room_id).label("rooms_booked"))
             .select_from(Bookings)
             .where(
                 or_(
