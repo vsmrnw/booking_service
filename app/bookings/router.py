@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, status
 from pydantic import parse_obj_as
 
 from app.bookings.repository import BookingRepo
-from app.bookings.schemas import SBooking
+from app.bookings.schemas import SBooking, SNewBooking
 from app.exceptions import RoomCannotBeBooked
+from app.tasks.tasks import send_booking_confirmation_email
 from app.users.dependencies import get_current_user
 from app.users.models import Users
 
@@ -27,13 +28,14 @@ async def add_booking(
         user: Users = Depends(get_current_user),
 ):
     booking = await BookingRepo.add(
-        user.id,
+        user_id,
         room_id,
         date_from,
         date_to)
     if not booking:
         raise RoomCannotBeBooked
-    booking = parse_obj_as(SBooking, booking).dict()
+    booking = parse_obj_as(SNewBooking, booking).dict()
+    send_booking_confirmation_email.delay(booking, user.email)
     return booking
 
 
