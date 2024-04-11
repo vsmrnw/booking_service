@@ -28,7 +28,7 @@ async def add_booking(
         user: Users = Depends(get_current_user),
 ):
     booking = await BookingRepo.add(
-        user_id,
+        user.id,
         room_id,
         date_from,
         date_to)
