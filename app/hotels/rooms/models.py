@@ -20,4 +20,4 @@ class Rooms(Base):
     booking = relationship("Bookings", back_populates="room")
 
     def __str__(self):
-        return f"Number {self.name}"
+        return f"{self.name}"
