@@ -19,7 +19,7 @@ router = APIRouter(
 @router.get("")
 async def get_bookings(user: Users = Depends(get_current_user)) -> list[
     SBooking]:
-    return await BookingRepo.find_all(user_id=user)
+    return await BookingRepo.find_all(user_id=user.id)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -44,4 +44,5 @@ async def remove_booking(
         booking_id: int,
         user: Users = Depends(get_current_user)
 ):
-    await BookingRepo.delete(id=booking_id, user_id=user)
+    await BookingRepo.delete(id=booking_id, user_id=user.id)
+    return {"message": f"Booking {booking_id} successfully deleted"}

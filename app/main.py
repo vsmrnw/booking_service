@@ -4,18 +4,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
+from sqladmin import Admin
 
-from sqladmin import Admin, ModelView
-
+from app.admin.auth import authentication_backend
 from app.admin.views import BookingsAdmin, UsersAdmin, RoomsAdmin, HotelsAdmin
-from app.bookings.models import Bookings
-from app.config import settings
 from app.bookings.router import router as router_bookings
+from app.config import settings
 from app.database import engine
 from app.hotels.router import router as router_hotels
 from app.images.router import router as router_images
 from app.pages.router import router as router_pages
-from app.users.models import Users
 from app.users.router import router_auth, router_users
 
 app = FastAPI()
@@ -53,8 +51,8 @@ async def startup():
     FastAPICache.init(RedisBackend(redis), prefix="cache")
 
 
-admin = Admin(app, engine)
-
+# include sqladmin
+admin = Admin(app, engine, authentication_backend=authentication_backend)
 admin.add_view(UsersAdmin)
 admin.add_view(HotelsAdmin)
 admin.add_view(BookingsAdmin)

@@ -21,18 +21,16 @@ def verify_password(plain_password, hashed_password) -> bool:
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=1)
+    expire = datetime.utcnow() + timedelta(minutes=30)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY,
-                             settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, settings.ALGORITHM
+    )
     return encoded_jwt
 
 
 async def authenticate_user(email: EmailStr, password: str):
     user = await UsersRepo.find_one_or_none(email=email)
-    try:
-        if not user and not verify_password(password, user.password):
-            raise IncorrectEmailOrPasswordException
-        return user
-    except AttributeError:
+    if not (user and verify_password(password, user.hashed_password)):
         raise IncorrectEmailOrPasswordException
+    return user
