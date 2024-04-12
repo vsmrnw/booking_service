@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -16,7 +18,16 @@ from app.images.router import router as router_images
 from app.pages.router import router as router_pages
 from app.users.router import router_auth, router_users
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    redis = aioredis.from_url(
+        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
+    FastAPICache.init(RedisBackend(redis), prefix="cache")
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="app/static"), "static")
 
@@ -42,14 +53,6 @@ app.add_middleware(
                    "Access-Control-Allow-Origin",
                    "Authorization"],
 )
-
-
-@app.on_event("startup")
-async def startup():
-    redis = aioredis.from_url(
-        f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
-    FastAPICache.init(RedisBackend(redis), prefix="cache")
-
 
 # include sqladmin
 admin = Admin(app, engine, authentication_backend=authentication_backend)
