@@ -1,4 +1,5 @@
 from sqlalchemy import select, insert, delete
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import async_session_maker
 
@@ -22,10 +23,19 @@ class BaseRepo:
 
     @classmethod
     async def add(cls, **data):
-        async with async_session_maker() as session:
-            query = insert(cls.model).values(**data)
-            await session.execute(query)
-            await session.commit()
+        try:
+            query = insert(cls.model).values(**data).returning(cls.model.id)
+            async with async_session_maker() as session:
+                result = await session.execute(query)
+                await session.commit()
+                return result.mappings().first()
+        except (SQLAlchemyError, Exception) as e:
+            if isinstance(e, SQLAlchemyError):
+                msg = "Database Exc: Cannot insert data into table"
+            elif isinstance(e, Exception):
+                msg = "Unknown Exc: Cannot insert data into table"
+
+            return None
 
     @classmethod
     async def delete(cls, **filer_by):
