@@ -34,7 +34,7 @@ async def add_booking(
         date_to)
     if not booking:
         raise RoomCannotBeBooked
-    booking = parse_obj_as(SNewBooking, booking).dict()
+    booking = parse_obj_as(SNewBooking, booking).model_dump()
     send_booking_confirmation_email.delay(booking, user.email)
     return booking
 
