@@ -29,7 +29,7 @@ async def register_user(user_data: SUserAuth):
     )
     if not new_user:
         raise CannotAddDataToDatabase
-
+    return {"message": f"{user_data.email} successfully registered"}
 
 @router_auth.post("/login")
 async def login_user(response: Response, user_data: SUserAuth):
