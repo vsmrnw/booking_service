@@ -1,11 +1,15 @@
 from datetime import datetime
 
-from fastapi import Request, Depends
-from jose import jwt, JWTError
+from fastapi import Depends, Request
+from jose import JWTError, jwt
 
 from app.config import settings
-from app.exceptions import TokenExpiredException, TokenNotProvidedException, \
-    IncorrectTokenFormatException, IncorrectAuthDataException
+from app.exceptions import (
+    IncorrectAuthDataException,
+    IncorrectTokenFormatException,
+    TokenExpiredException,
+    TokenNotProvidedException,
+)
 from app.users.repository import UsersRepo
 
 
@@ -18,9 +22,7 @@ def get_token(request: Request):
 
 async def get_current_user(token: str = Depends(get_token)):
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, settings.ALGORITHM
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, settings.ALGORITHM)
     except JWTError:
         raise IncorrectTokenFormatException
     user_id: str = payload.get("sub")

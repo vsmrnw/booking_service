@@ -1,12 +1,12 @@
 from datetime import date
 
-from sqlalchemy import select, func, or_, and_
+from sqlalchemy import and_, func, or_, select
 
 from app.bookings.models import Bookings
 from app.database import async_session_maker
+from app.hotels.models import Hotels
 from app.hotels.rooms.models import Rooms
 from app.repository.base import BaseRepo
-from app.hotels.models import Hotels
 
 
 class HotelsRepo(BaseRepo):
@@ -53,8 +53,10 @@ class HotelsRepo(BaseRepo):
         WHERE rooms_left > 0 AND location LIKE '%Алтай%';
         """
         booked_rooms = (
-            select(Bookings.room_id,
-                   func.count(Bookings.room_id).label("rooms_booked"))
+            select(
+                Bookings.room_id,
+                func.count(Bookings.room_id).label("rooms_booked"),
+            )
             .select_from(Bookings)
             .where(
                 or_(
@@ -73,12 +75,17 @@ class HotelsRepo(BaseRepo):
         )
 
         booked_hotels = (
-            select(Rooms.hotel_id, func.sum(
-                Rooms.quantity - func.coalesce(booked_rooms.c.rooms_booked, 0)
-            ).label("rooms_left"))
+            select(
+                Rooms.hotel_id,
+                func.sum(
+                    Rooms.quantity
+                    - func.coalesce(booked_rooms.c.rooms_booked, 0)
+                ).label("rooms_left"),
+            )
             .select_from(Rooms)
-            .join(booked_rooms, booked_rooms.c.room_id == Rooms.id,
-                  isouter=True)
+            .join(
+                booked_rooms, booked_rooms.c.room_id == Rooms.id, isouter=True
+            )
             .group_by(Rooms.hotel_id)
             .cte("booked_hotels")
         )
@@ -88,8 +95,11 @@ class HotelsRepo(BaseRepo):
                 Hotels.__table__.columns,
                 booked_hotels.c.rooms_left,
             )
-            .join(booked_hotels, booked_hotels.c.hotel_id == Hotels.id,
-                  isouter=True)
+            .join(
+                booked_hotels,
+                booked_hotels.c.hotel_id == Hotels.id,
+                isouter=True,
+            )
             .where(
                 and_(
                     booked_hotels.c.rooms_left > 0,

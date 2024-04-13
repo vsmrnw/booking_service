@@ -1,11 +1,11 @@
 from datetime import date
 
-from sqlalchemy import select, and_, or_, func, insert
+from sqlalchemy import and_, func, insert, or_, select
 
 from app.bookings.models import Bookings
 from app.database import async_session_maker
-from app.repository.base import BaseRepo
 from app.hotels.rooms.models import Rooms
+from app.repository.base import BaseRepo
 
 
 class BookingRepo(BaseRepo):
@@ -26,11 +26,7 @@ class BookingRepo(BaseRepo):
             return result.mappings().all()
 
     @classmethod
-    async def add(cls,
-                  user_id,
-                  room_id: int,
-                  date_from: date,
-                  date_to: date):
+    async def add(cls, user_id, room_id: int, date_from: date, date_to: date):
         """
         WITH booked_rooms AS (
         SELECT * FROM bookings
@@ -66,14 +62,16 @@ class BookingRepo(BaseRepo):
 
             get_rooms_left = (
                 select(
-                    (Rooms.quantity - func.count(
-                        booked_rooms.c.room_id)).label(
-                        "rooms_left"
-                    )
+                    (
+                        Rooms.quantity - func.count(booked_rooms.c.room_id)
+                    ).label("rooms_left")
                 )
                 .select_from(Rooms)
-                .join(booked_rooms, booked_rooms.c.room_id == Rooms.id,
-                      isouter=True)
+                .join(
+                    booked_rooms,
+                    booked_rooms.c.room_id == Rooms.id,
+                    isouter=True,
+                )
                 .where(Rooms.id == room_id)
                 .group_by(Rooms.quantity, booked_rooms.c.room_id)
             )
