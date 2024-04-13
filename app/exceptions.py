@@ -34,6 +34,11 @@ class IncorrectTokenFormatException(BookingException):
     detail = "Incorrect token format"
 
 
+class RoomFullyBooked(BookingException):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "No free rooms left"
+
+
 class IncorrectAuthDataException(BookingException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Incorrect auth data"

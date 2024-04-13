@@ -1,6 +1,7 @@
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
@@ -17,6 +18,7 @@ from app.hotels.router import router as router_hotels
 from app.images.router import router as router_images
 from app.pages.router import router as router_pages
 from app.users.router import router_auth, router_users
+from app.logger import logger
 
 
 @asynccontextmanager
@@ -64,3 +66,14 @@ admin.add_view(UsersAdmin)
 admin.add_view(HotelsAdmin)
 admin.add_view(BookingsAdmin)
 admin.add_view(RoomsAdmin)
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    logger.info("Request execution time", extra={
+        "process_time": round(process_time, 4)
+    })
+    return response
