@@ -3,6 +3,8 @@ services:
   db:
     image: postgres:16
     container_name: booking_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     env_file:
       - .env.prod
     ports:
@@ -13,11 +15,11 @@ services:
     container_name: booking_redis
 
   app:
-    image: booking_service
+    image: booking_app
     build:
       context: .
     container_name: booking_app
-    environment:
+    env_file:
       - .env.prod
     command: sh -c "alembic upgrade head && gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
@@ -43,3 +45,27 @@ services:
     command: sh -c "celery --app=app.tasks.celery:celery flower"
     depends_on:
       - redis
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus.yml
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+
+volumes:
+  postgres_data:
+  grafana_data:
+  prometheus_data:

@@ -8,6 +8,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 from sqladmin import Admin
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.admin.auth import authentication_backend
 from app.admin.views import BookingsAdmin, HotelsAdmin, RoomsAdmin, UsersAdmin
@@ -17,6 +18,7 @@ from app.database import engine
 from app.hotels.router import router as router_hotels
 from app.images.router import router as router_images
 from app.pages.router import router as router_pages
+from app.prometheus.router import router as router_prometheus
 from app.users.router import router_auth, router_users
 from app.logger import logger
 
@@ -30,7 +32,14 @@ async def lifespan(app: FastAPI):
     yield
 
 
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    excluded_handlers=[".*admin.*", "/metrics"],
+)
+
 app = FastAPI(lifespan=lifespan)
+
+instrumentator.instrument(app).expose(app)
 
 app.mount("/static", StaticFiles(directory="app/static"), "static")
 
@@ -41,6 +50,7 @@ app.include_router(router_bookings)
 
 app.include_router(router_pages)
 app.include_router(router_images)
+app.include_router(router_prometheus)
 
 origins = [
     "http://localhost:3000",
